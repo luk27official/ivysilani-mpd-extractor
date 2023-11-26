@@ -9,6 +9,15 @@ import json
 import subprocess
 import argparse
 
+# css selectors
+COOKIE_ACCEPT_BUTTON_ID = "onetrust-accept-btn-handler"
+VIDEO_CLASS_NAME = "playerPageWrapper"
+AD_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
+AD_18_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
+
+# other constants
+CDN_URL = "https://ivys-cdn.o2tv.cz/cdn/"
+
 
 def main(args):
     """Extracts the MPD URL from the given URL using Selenium and optionally downloads the video with yt-dlp"""
@@ -33,22 +42,22 @@ def main(args):
 
     chrome.implicitly_wait(1)
 
-    chrome.find_element(By.ID, "onetrust-accept-btn-handler").click()
+    chrome.find_element(By.ID, COOKIE_ACCEPT_BUTTON_ID).click()
     print("Clicked cookie accept button")
 
-    chrome.find_element(By.CLASS_NAME, "playerPageWrapper").click()
+    chrome.find_element(By.CLASS_NAME, VIDEO_CLASS_NAME).click()
     print("Clicked on the video")
 
     chrome.switch_to.frame(chrome.find_element(By.TAG_NAME, "iframe"))
 
     try:
-        WebDriverWait(chrome, 7).until(EC.presence_of_element_located((By.XPATH, '//span[text()="Přeskočit"]'))).click()
+        WebDriverWait(chrome, 7).until(EC.presence_of_element_located((By.XPATH, AD_SKIP_BUTTON_XPATH))).click()
         print("Skipped ad")
     except:
         print("No ad to skip")
 
     try:
-        WebDriverWait(chrome, 7).until(EC.presence_of_element_located((By.XPATH, '//span[text()="Přeskočit"]'))).click()
+        WebDriverWait(chrome, 7).until(EC.presence_of_element_located((By.XPATH, AD_18_SKIP_BUTTON_XPATH))).click()
         print("Skipped 18+ warning")
     except:
         print("No 18+ warning to skip")
@@ -65,11 +74,11 @@ def main(args):
     mpd_list = []
 
     for timing in timings_json:
-        if timing["name"].startswith("https://ivys-cdn.o2tv.cz/cdn/"):
+        if timing["name"].startswith(CDN_URL):
             mpd_list.append(timing["name"])
 
+    print("Done.")
     print("MPD list: ", mpd_list)
-    print("")
     print("")
     print("Most recent MPD: ", mpd_list[-1])
 

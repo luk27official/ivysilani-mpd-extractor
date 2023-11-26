@@ -1,0 +1,96 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+import time
+import json
+import subprocess
+import argparse
+
+
+def main(args):
+    """Extracts the MPD URL from the given URL using Selenium and optionally downloads the video with yt-dlp"""
+    url = (
+        args.url
+        if args.url != ""
+        else input("Enter URL (e.g.: https://www.ceskatelevize.cz/porady/10640154216-most/214381477720001/): ")
+    )
+
+    options = Options()
+
+    options.add_argument("--headless")
+    options.add_argument("--ignore-certificate-errors")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--mute-audio")
+
+    options.add_experimental_option("excludeSwitches", ["enable-logging"])
+
+    chrome = webdriver.Chrome(options=options)
+    chrome.get(url)
+    print("Loaded URL: ", url)
+
+    chrome.implicitly_wait(1)
+
+    chrome.find_element(By.ID, "onetrust-accept-btn-handler").click()
+    print("Clicked cookie accept button")
+
+    chrome.find_element(By.CLASS_NAME, "playerPageWrapper").click()
+    print("Clicked on the video")
+
+    chrome.switch_to.frame(chrome.find_element(By.TAG_NAME, "iframe"))
+
+    try:
+        WebDriverWait(chrome, 7).until(EC.presence_of_element_located((By.XPATH, '//span[text()="Přeskočit"]'))).click()
+        print("Skipped ad")
+    except:
+        print("No ad to skip")
+
+    try:
+        WebDriverWait(chrome, 7).until(EC.presence_of_element_located((By.XPATH, '//span[text()="Přeskočit"]'))).click()
+        print("Skipped 18+ warning")
+    except:
+        print("No 18+ warning to skip")
+
+    # wait for the video to load
+    print("Waiting for the video to load...")
+    time.sleep(5)
+
+    # go to the networks console and find the latest .mpd file
+    timings = chrome.execute_script("return window.performance.getEntries();")
+    timings_json = json.dumps(timings)
+    timings_json = json.loads(timings_json)
+
+    mpd_list = []
+
+    for timing in timings_json:
+        if timing["name"].startswith("https://ivys-cdn.o2tv.cz/cdn/"):
+            mpd_list.append(timing["name"])
+
+    print("MPD list: ", mpd_list)
+    print("")
+    print("")
+    print("Most recent MPD: ", mpd_list[-1])
+
+    if args.download:
+        title = chrome.title
+        subprocess.call(["yt-dlp", "-o", title + ".%(ext)s", mpd_list[-1]])
+
+    chrome.quit()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-u", "--url", help="URL to the video", default="", type=str, dest="url")
+    parser.add_argument(
+        "-d",
+        "--download",
+        help="Download the video with yt-dlp, if in PATH",
+        default=False,
+        dest="download",
+        action="store_true",
+    )
+    args = parser.parse_args()
+
+    main(args)

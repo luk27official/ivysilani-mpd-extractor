@@ -58,7 +58,7 @@ def main(args):
         print("No ad to skip")
 
     try:
-        WebDriverWait(chrome, 10).until(EC.presence_of_element_located((By.XPATH, AD_18_SKIP_BUTTON_XPATH))).click()
+        WebDriverWait(chrome, 7).until(EC.presence_of_element_located((By.XPATH, AD_18_SKIP_BUTTON_XPATH))).click()
         print("Skipped 18+ warning")
     except:
         print("No 18+ warning to skip")
@@ -83,10 +83,10 @@ def main(args):
     print("")
     print("Most recent MPD: ", mpd_list[-1])
 
+    title = chrome.title.replace("/", "_").replace("\\", "_")
     chrome.quit()
 
     if args.download:
-        title = chrome.title
         subprocess.call(["yt-dlp", "-o", title + ".%(ext)s", mpd_list[-1]])
 
 

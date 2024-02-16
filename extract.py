@@ -33,6 +33,7 @@ def main(args):
     options.add_argument("--ignore-certificate-errors")
     options.add_argument("--disable-gpu")
     options.add_argument("--mute-audio")
+    options.add_argument("--log-level=3")
 
     options.add_experimental_option("excludeSwitches", ["enable-logging"])
 
@@ -51,13 +52,13 @@ def main(args):
     chrome.switch_to.frame(chrome.find_element(By.TAG_NAME, "iframe"))
 
     try:
-        WebDriverWait(chrome, 7).until(EC.presence_of_element_located((By.XPATH, AD_SKIP_BUTTON_XPATH))).click()
+        WebDriverWait(chrome, 10).until(EC.presence_of_element_located((By.XPATH, AD_SKIP_BUTTON_XPATH))).click()
         print("Skipped ad")
     except:
         print("No ad to skip")
 
     try:
-        WebDriverWait(chrome, 7).until(EC.presence_of_element_located((By.XPATH, AD_18_SKIP_BUTTON_XPATH))).click()
+        WebDriverWait(chrome, 10).until(EC.presence_of_element_located((By.XPATH, AD_18_SKIP_BUTTON_XPATH))).click()
         print("Skipped 18+ warning")
     except:
         print("No 18+ warning to skip")
@@ -82,11 +83,11 @@ def main(args):
     print("")
     print("Most recent MPD: ", mpd_list[-1])
 
+    chrome.quit()
+
     if args.download:
         title = chrome.title
         subprocess.call(["yt-dlp", "-o", title + ".%(ext)s", mpd_list[-1]])
-
-    chrome.quit()
 
 
 if __name__ == "__main__":

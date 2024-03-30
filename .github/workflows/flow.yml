@@ -1,6 +1,12 @@
 name: test-mpd-extraction
 
-on: [push]
+on:
+    push:
+        branches:
+            - main
+            - dev
+    schedule:
+        - cron: "0 0 * * 0"
 
 jobs:
     run_script:

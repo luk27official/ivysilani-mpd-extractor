@@ -13,12 +13,13 @@ import sys
 # css selectors
 COOKIE_ACCEPT_BUTTON_ID = "onetrust-accept-btn-handler"
 VIDEO_CLASS_NAME = "playerPageWrapper"
+MOVIE_RUN_XPATH = '//span[starts-with(text(), "Přehrát")]'
 AD_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
 AD_18_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
 
 # wait times
 AD_WAIT_TIME = 10
-AD_18_WAIT_TIME = 7
+AD_18_WAIT_TIME = 10
 VIDEO_LOAD_WAIT_TIME = 5
 
 # other constants
@@ -54,8 +55,12 @@ def main(args):
     chrome.find_element(By.ID, COOKIE_ACCEPT_BUTTON_ID).click()
     print("Clicked cookie accept button")
 
-    chrome.find_element(By.CLASS_NAME, VIDEO_CLASS_NAME).click()
-    print("Clicked on the video")
+    try:
+        chrome.find_element(By.CLASS_NAME, VIDEO_CLASS_NAME).click()
+        print("Clicked on the video - detected series")
+    except:
+        chrome.find_element(By.XPATH, MOVIE_RUN_XPATH).click()
+        print("Clicked on the video - detected movie")
 
     chrome.switch_to.frame(chrome.find_element(By.TAG_NAME, "iframe"))
 

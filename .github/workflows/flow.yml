@@ -1,0 +1,14 @@
+name: test-mpd-extraction
+
+on: [push]
+
+jobs:
+    run_script:
+        name: Run Python Script and test the .mpd extraction
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: "3.10"
+            - run: python extract.py --url https://www.ceskatelevize.cz/porady/10995220806-most/216512120010001/

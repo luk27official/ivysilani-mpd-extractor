@@ -8,6 +8,7 @@ import time
 import json
 import subprocess
 import argparse
+import sys
 
 # css selectors
 COOKIE_ACCEPT_BUTTON_ID = "onetrust-accept-btn-handler"
@@ -100,6 +101,9 @@ def main(args):
 
     if args.download:
         subprocess.call(["yt-dlp", "-o", title + ".%(ext)s", mpd_list[-1]])
+
+    if len(mpd_list) == 0:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

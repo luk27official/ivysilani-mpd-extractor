@@ -15,6 +15,11 @@ VIDEO_CLASS_NAME = "playerPageWrapper"
 AD_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
 AD_18_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
 
+# wait times
+AD_WAIT_TIME = 10
+AD_18_WAIT_TIME = 7
+VIDEO_LOAD_WAIT_TIME = 5
+
 # other constants
 CDN_URL = "https://ivys-cdn.o2tv.cz/cdn/"
 
@@ -34,6 +39,8 @@ def main(args):
     options.add_argument("--disable-gpu")
     options.add_argument("--mute-audio")
     options.add_argument("--log-level=3")
+    options.add_argument("--disable-web-security")  # allows to bypass CORS
+    options.add_argument("--disable-site-isolation-trials")
 
     options.add_experimental_option("excludeSwitches", ["enable-logging"])
 
@@ -52,31 +59,36 @@ def main(args):
     chrome.switch_to.frame(chrome.find_element(By.TAG_NAME, "iframe"))
 
     try:
-        WebDriverWait(chrome, 10).until(EC.presence_of_element_located((By.XPATH, AD_SKIP_BUTTON_XPATH))).click()
+        WebDriverWait(chrome, AD_WAIT_TIME).until(
+            EC.presence_of_element_located((By.XPATH, AD_SKIP_BUTTON_XPATH))
+        ).click()
         print("Skipped ad")
     except:
         print("No ad to skip")
 
     try:
-        WebDriverWait(chrome, 7).until(EC.presence_of_element_located((By.XPATH, AD_18_SKIP_BUTTON_XPATH))).click()
+        WebDriverWait(chrome, AD_18_WAIT_TIME).until(
+            EC.presence_of_element_located((By.XPATH, AD_18_SKIP_BUTTON_XPATH))
+        ).click()
         print("Skipped 18+ warning")
     except:
         print("No 18+ warning to skip")
 
     # wait for the video to load
     print("Waiting for the video to load...")
-    time.sleep(5)
+    time.sleep(VIDEO_LOAD_WAIT_TIME)
 
     # go to the networks console and find the latest .mpd file
-    timings = chrome.execute_script("return window.performance.getEntries();")
+    # the script simplifies the entries because there might be circular references
+    timings = chrome.execute_script("return window.performance.getEntries().map(entry => entry.name);")
     timings_json = json.dumps(timings)
     timings_json = json.loads(timings_json)
 
     mpd_list = []
 
     for timing in timings_json:
-        if timing["name"].startswith(CDN_URL):
-            mpd_list.append(timing["name"])
+        if timing.startswith(CDN_URL):
+            mpd_list.append(timing)
 
     print("Done.")
     print("MPD list: ", mpd_list)

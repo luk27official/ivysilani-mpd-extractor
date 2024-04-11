@@ -9,6 +9,7 @@ import json
 import subprocess
 import argparse
 import sys
+import re
 
 # css selectors
 COOKIE_ACCEPT_BUTTON_ID = "onetrust-accept-btn-handler"
@@ -23,7 +24,7 @@ AD_18_WAIT_TIME = 10
 VIDEO_LOAD_WAIT_TIME = 5
 
 # other constants
-CDN_URL = "https://ivys-cdn.o2tv.cz/cdn/"
+CDN_REGEX = r"https:\/\/.+\.o2tv\.cz\/cdn.*"
 
 
 def main(args):
@@ -95,7 +96,7 @@ def main(args):
     mpd_list = []
 
     for timing in timings_json:
-        if timing.startswith(CDN_URL):
+        if re.match(CDN_REGEX, timing):
             mpd_list.append(timing)
 
     print("Done.")
@@ -126,7 +127,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-n",
-        "--not-headless",
+        "--no-headless",
         help="Run in a window (no --headless option)",
         default=False,
         dest="no_headless",

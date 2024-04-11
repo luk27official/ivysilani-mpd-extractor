@@ -102,16 +102,17 @@ def main(args):
     print("Done.")
     print("MPD list: ", mpd_list)
     print("")
-    print("Most recent MPD: ", mpd_list[-1])
+    if len(mpd_list) > 0:
+        print("Most recent MPD: ", mpd_list[-1])
+    else:
+        print("No MPD found. Try running the script with the --no-headless flag.")
+        sys.exit(1)
 
     title = chrome.title.replace("/", "_").replace("\\", "_")
     chrome.quit()
 
     if args.download:
         subprocess.call(["yt-dlp", "-o", title + ".%(ext)s", mpd_list[-1]])
-
-    if len(mpd_list) == 0:
-        sys.exit(1)
 
 
 if __name__ == "__main__":

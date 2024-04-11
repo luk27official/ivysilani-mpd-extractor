@@ -10,6 +10,8 @@ import subprocess
 import argparse
 import sys
 import re
+import requests
+import os
 
 # css selectors
 COOKIE_ACCEPT_BUTTON_ID = "onetrust-accept-btn-handler"
@@ -94,24 +96,53 @@ def main(args):
     timings_json = json.loads(timings_json)
 
     mpd_list = []
+    counter_mpd_saves = 0
+    title = chrome.title.replace("/", "_").replace("\\", "_")
+    file_title = re.sub(r"[^\w+]", "", title)  # removes special characters
 
     for timing in timings_json:
         if re.match(CDN_REGEX, timing):
-            mpd_list.append(timing)
+            if "mpd" not in timing:
+                # we have to save the .mpd directly to a file
+                counter_mpd_saves += 1
+                r = requests.get(timing)
+                if r.ok:
+                    with open(f"{file_title}_{counter_mpd_saves}.mpd", "w", encoding="utf-8") as f:
+                        f.write(r.text)
+                        print(f"MPD {counter_mpd_saves} saved to a .mpd file.")
+            else:
+                mpd_list.append(timing)
 
-    print("Done.")
-    print("MPD list: ", mpd_list)
-    print("")
-    print("Most recent MPD: ", mpd_list[-1])
-
-    title = chrome.title.replace("/", "_").replace("\\", "_")
     chrome.quit()
 
-    if args.download:
-        subprocess.call(["yt-dlp", "-o", title + ".%(ext)s", mpd_list[-1]])
-
     if len(mpd_list) == 0:
-        sys.exit(1)
+        if counter_mpd_saves > 0:
+            print("Done. MPD file(s) saved to the folder.")
+        else:
+            print("Done. No MPD found.")
+            sys.exit(1)
+
+    else:
+        print("Done.")
+        print("MPD list: ", mpd_list)
+        print("")
+        print("Most recent MPD: ", mpd_list[-1])
+
+    if args.download:
+        if len(mpd_list) > 0:
+            subprocess.call(["yt-dlp", "-o", title + ".%(ext)s", mpd_list[-1]])
+        else:
+            full_file_name = f"{file_title}_{counter_mpd_saves}.mpd"
+            path = os.path.join(os.getcwd(), full_file_name).replace("\\", "/")
+            subprocess.call(
+                [
+                    "yt-dlp",
+                    "--enable-file-urls",
+                    "-o",
+                    title + ".%(ext)s",
+                    "file:///" + path,
+                ]
+            )
 
 
 if __name__ == "__main__":

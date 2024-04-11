@@ -8,7 +8,7 @@ Feel free to [open an issue](https://github.com/luk27official/ivysilani-mpd-extr
 
 ## Install
 
-Install Python and install Selenium Python package, either by `pip install selenium` or run `pip install -r requirements.txt`
+Install Python and install Selenium and requests Python package, either by `pip install selenium requests` or run `pip install -r requirements.txt`
 
 ## Usage
 

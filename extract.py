@@ -36,7 +36,9 @@ def main(args):
 
     options = Options()
 
-    options.add_argument("--headless")
+    options.add_argument("window-size=1920x1080")
+    if not args.no_headless:
+        options.add_argument("--headless")
     options.add_argument("--ignore-certificate-errors")
     options.add_argument("--disable-gpu")
     options.add_argument("--mute-audio")
@@ -120,6 +122,14 @@ if __name__ == "__main__":
         help="Download the video with yt-dlp, if in PATH",
         default=False,
         dest="download",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-n",
+        "--not-headless",
+        help="Run in a window (no --headless option)",
+        default=False,
+        dest="no_headless",
         action="store_true",
     )
     args = parser.parse_args()

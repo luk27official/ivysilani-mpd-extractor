@@ -14,7 +14,7 @@ import re
 # css selectors
 COOKIE_ACCEPT_BUTTON_ID = "onetrust-accept-btn-handler"
 VIDEO_CLASS_NAME = "playerPageWrapper"
-MOVIE_RUN_XPATH = '//span[starts-with(text(), "Přehrát")]'
+MOVIE_RUN_XPATH = '//button[contains(@aria-label, "Přehrát")]'
 AD_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
 AD_18_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
 

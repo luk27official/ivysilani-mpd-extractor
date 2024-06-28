@@ -1,4 +1,7 @@
+import os
+
 from selenium import webdriver
+from selenium.common import NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
@@ -27,36 +30,17 @@ VIDEO_LOAD_WAIT_TIME = 5
 CDN_REGEX = r"https:\/\/.+\.o2tv\.cz\/cdn.*"
 
 
-def main(args):
-    """Extracts the MPD URL from the given URL using Selenium and optionally downloads the video with yt-dlp"""
-    url = (
-        args.url
-        if args.url != ""
-        else input("Enter URL (e.g.: https://www.ceskatelevize.cz/porady/10640154216-most/214381477720001/): ")
-    )
-
-    options = Options()
-
-    options.add_argument("window-size=1920x1080")
-    if not args.no_headless:
-        options.add_argument("--headless")
-    options.add_argument("--ignore-certificate-errors")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--mute-audio")
-    options.add_argument("--log-level=3")
-    options.add_argument("--disable-web-security")  # allows to bypass CORS
-    options.add_argument("--disable-site-isolation-trials")
-
-    options.add_experimental_option("excludeSwitches", ["enable-logging"])
-
-    chrome = webdriver.Chrome(options=options)
+def get_mpd(chrome, url, folder=""):
     chrome.get(url)
     print("Loaded URL: ", url)
 
     chrome.implicitly_wait(1)
 
-    chrome.find_element(By.ID, COOKIE_ACCEPT_BUTTON_ID).click()
-    print("Clicked cookie accept button")
+    try:
+        chrome.find_element(By.ID, COOKIE_ACCEPT_BUTTON_ID).click()
+        print("Clicked cookie accept button")
+    except:
+        print("No cookie accept button found")
 
     try:
         chrome.find_element(By.CLASS_NAME, VIDEO_CLASS_NAME).click()
@@ -109,11 +93,63 @@ def main(args):
         sys.exit(1)
 
     title = chrome.title.replace("/", "_").replace("\\", "_")
-    chrome.quit()
-
+    title = f"{folder}{title}"
     if args.download:
-        subprocess.call(["yt-dlp", "-o", title + ".%(ext)s", mpd_list[-1]])
+        subprocess.call(["yt-dlp", "--no-overwrites", "-o", title + ".%(ext)s", mpd_list[-1]])
 
+
+def main(args):
+    """Extracts the MPD URL from the given URL using Selenium and optionally downloads the video with yt-dlp"""
+    url = (
+        args.url
+        if args.url != ""
+        else input("Enter URL (e.g.: https://www.ceskatelevize.cz/porady/10640154216-most/214381477720001/): ")
+    )
+
+    options = Options()
+
+    options.add_argument("window-size=1920x1080")
+    if not args.no_headless:
+        options.add_argument("--headless")
+    options.add_argument("--ignore-certificate-errors")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--mute-audio")
+    options.add_argument("--log-level=3")
+    options.add_argument("--disable-web-security")  # allows to bypass CORS
+    options.add_argument("--disable-site-isolation-trials")
+
+    options.add_experimental_option("excludeSwitches", ["enable-logging"])
+
+    chrome = webdriver.Chrome(options=options)
+
+    #check if the URL is link to epizode list or only one epizode
+    if re.match(r"https://www.ceskatelevize.cz/[^/]*/[^/]*/$", url):
+        chrome.get(url)
+        print(f"Get infro from episode list {url}")
+
+        while True:
+            try:
+                more_button = chrome.find_element(By.CLASS_NAME, 'moreButton-0-2-141')
+                WebDriverWait(chrome, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'moreButton-0-2-141')))
+                more_button.click()
+                WebDriverWait(chrome, 5)
+            except (NoSuchElementException, StaleElementReferenceException):
+                break
+
+        episodeListSection = chrome.find_element(By.ID, 'episodeListSection')
+        elements = episodeListSection.find_elements(By.CLASS_NAME, "ctco_1gy3thf4")
+        links = [element.get_attribute('href') for element in elements]
+        s_title = chrome.title.replace("/", "_").replace("\\", "_")
+        folder = f"./{s_title}/"
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        for url in links:
+            print(url)
+            get_mpd(chrome, url, folder=folder)
+    else:
+        get_mpd(chrome, url)
+
+    #chrome.quit()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

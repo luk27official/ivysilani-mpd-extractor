@@ -1,9 +1,13 @@
+
 from selenium import webdriver
+from selenium.common import NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException, \
+    TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+import os
 import time
 import json
 import subprocess
@@ -18,45 +22,35 @@ MOVIE_RUN_XPATH = '//button[contains(@aria-label, "Přehrát")]'
 AD_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
 AD_18_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
 
+#selectors for list of episodes
+EPISODES_LIST_REGEX = r"https://www.ceskatelevize.cz/[^/]*/[^/]*/$"
+MORE_BTN_CLASSNAME, MORE_BTN_LOAD_TIME, MORE_BTN_CLICK_TIME = "[class^='moreButton-']", 10, 5
+EPISODE_LIST_CLASSNAME = 'episodeListSection'
+EPISODE_LIST_ROW = "ctco_1gy3thf4"
+
 # wait times
 AD_WAIT_TIME = 10
 AD_18_WAIT_TIME = 10
 VIDEO_LOAD_WAIT_TIME = 5
-
+COOKIE_BTN_WAIT_TIME = 10
 # other constants
 CDN_REGEX = r"https:\/\/.+\.o2tv\.cz\/cdn.*"
 
+def accept_cookies(chrome):
+    try:
+        WebDriverWait(chrome, COOKIE_BTN_WAIT_TIME).until(EC.element_to_be_clickable((By.ID , COOKIE_ACCEPT_BUTTON_ID)))
+        chrome.find_element(By.ID, COOKIE_ACCEPT_BUTTON_ID).click()
+        print("Clicked cookie accept button")
+    except:
+        print("No cookie accept button found")
 
-def main(args):
-    """Extracts the MPD URL from the given URL using Selenium and optionally downloads the video with yt-dlp"""
-    url = (
-        args.url
-        if args.url != ""
-        else input("Enter URL (e.g.: https://www.ceskatelevize.cz/porady/10640154216-most/214381477720001/): ")
-    )
-
-    options = Options()
-
-    options.add_argument("window-size=1920x1080")
-    if not args.no_headless:
-        options.add_argument("--headless")
-    options.add_argument("--ignore-certificate-errors")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--mute-audio")
-    options.add_argument("--log-level=3")
-    options.add_argument("--disable-web-security")  # allows to bypass CORS
-    options.add_argument("--disable-site-isolation-trials")
-
-    options.add_experimental_option("excludeSwitches", ["enable-logging"])
-
-    chrome = webdriver.Chrome(options=options)
+def get_mpd(chrome, url, folder=""):
     chrome.get(url)
     print("Loaded URL: ", url)
 
     chrome.implicitly_wait(1)
 
-    chrome.find_element(By.ID, COOKIE_ACCEPT_BUTTON_ID).click()
-    print("Clicked cookie accept button")
+    accept_cookies(chrome)
 
     try:
         chrome.find_element(By.CLASS_NAME, VIDEO_CLASS_NAME).click()
@@ -109,11 +103,67 @@ def main(args):
         sys.exit(1)
 
     title = chrome.title.replace("/", "_").replace("\\", "_")
-    chrome.quit()
-
+    title = os.path.join(folder, title)
     if args.download:
-        subprocess.call(["yt-dlp", "-o", title + ".%(ext)s", mpd_list[-1]])
+        subprocess.call(["yt-dlp", "--no-overwrites", "-o", title + ".%(ext)s", mpd_list[-1]])
 
+
+def main(args):
+    """Extracts the MPD URL from the given URL using Selenium and optionally downloads the video with yt-dlp"""
+    url = (
+        args.url
+        if args.url != ""
+        else input("Enter URL (e.g.: https://www.ceskatelevize.cz/porady/10640154216-most/214381477720001/): ")
+    )
+
+    options = Options()
+
+    options.add_argument("window-size=1920x1080")
+    if not args.no_headless:
+        options.add_argument("--headless")
+    options.add_argument("--ignore-certificate-errors")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--mute-audio")
+    options.add_argument("--log-level=3")
+    options.add_argument("--disable-web-security")  # allows to bypass CORS
+    options.add_argument("--disable-site-isolation-trials")
+
+    options.add_experimental_option("excludeSwitches", ["enable-logging"])
+
+    chrome = webdriver.Chrome(options=options)
+
+    # check if the URL is a link to an episode list or only one episode
+    if re.match(EPISODES_LIST_REGEX, url):
+        chrome.get(url)
+        print(f"Get info about the episode list {url}")
+
+        accept_cookies(chrome)
+
+        while True:
+            try:
+                more_button = chrome.find_element(By.CSS_SELECTOR, MORE_BTN_CLASSNAME )
+                WebDriverWait(chrome, MORE_BTN_LOAD_TIME ).until(EC.element_to_be_clickable((By.CSS_SELECTOR, MORE_BTN_CLASSNAME)))
+                more_button.click()
+                WebDriverWait(chrome, MORE_BTN_CLICK_TIME)
+            except (NoSuchElementException, StaleElementReferenceException):
+                break
+
+        episodeListSection = chrome.find_element(By.ID, EPISODE_LIST_CLASSNAME)
+        episodes_rows = episodeListSection.find_elements(By.CLASS_NAME, EPISODE_LIST_ROW)
+
+        links = [episode.get_attribute('href') for episode in episodes_rows]
+        folder_title = chrome.title.replace("/", "_").replace("\\", "_").replace(" ", "_")
+        title_parts = re.findall(r'[\w]', folder_title)
+        folder_title = ''.join(title_parts) + "/"
+        print(f"Found {len(links)} episodes")
+        os.makedirs(folder_title, exist_ok=True) if args.download else None
+        for url in links:
+            print(url)
+            get_mpd(chrome, url, folder=folder_title)
+    else:
+        get_mpd(chrome, url)
+
+    chrome.quit()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -1,7 +1,5 @@
-
 from selenium import webdriver
-from selenium.common import NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException, \
-    TimeoutException
+from selenium.common import NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
@@ -22,10 +20,10 @@ MOVIE_RUN_XPATH = '//button[contains(@aria-label, "Přehrát")]'
 AD_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
 AD_18_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
 
-#selectors for list of episodes
+# selectors for list of episodes
 EPISODES_LIST_REGEX = r"https://www.ceskatelevize.cz/[^/]*/[^/]*/$"
 MORE_BTN_CLASSNAME, MORE_BTN_LOAD_TIME, MORE_BTN_CLICK_TIME = "[class^='moreButton-']", 10, 5
-EPISODE_LIST_CLASSNAME = 'episodeListSection'
+EPISODE_LIST_CLASSNAME = "episodeListSection"
 EPISODE_LIST_ROW = "ctco_1gy3thf4"
 
 # wait times
@@ -36,13 +34,15 @@ COOKIE_BTN_WAIT_TIME = 10
 # other constants
 CDN_REGEX = r"https:\/\/.+\.o2tv\.cz\/cdn.*"
 
+
 def accept_cookies(chrome):
     try:
-        WebDriverWait(chrome, COOKIE_BTN_WAIT_TIME).until(EC.element_to_be_clickable((By.ID , COOKIE_ACCEPT_BUTTON_ID)))
+        WebDriverWait(chrome, COOKIE_BTN_WAIT_TIME).until(EC.element_to_be_clickable((By.ID, COOKIE_ACCEPT_BUTTON_ID)))
         chrome.find_element(By.ID, COOKIE_ACCEPT_BUTTON_ID).click()
         print("Clicked cookie accept button")
     except:
         print("No cookie accept button found")
+
 
 def get_mpd(chrome, url, folder=""):
     chrome.get(url)
@@ -141,8 +141,10 @@ def main(args):
 
         while True:
             try:
-                more_button = chrome.find_element(By.CSS_SELECTOR, MORE_BTN_CLASSNAME )
-                WebDriverWait(chrome, MORE_BTN_LOAD_TIME ).until(EC.element_to_be_clickable((By.CSS_SELECTOR, MORE_BTN_CLASSNAME)))
+                more_button = chrome.find_element(By.CSS_SELECTOR, MORE_BTN_CLASSNAME)
+                WebDriverWait(chrome, MORE_BTN_LOAD_TIME).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, MORE_BTN_CLASSNAME))
+                )
                 more_button.click()
                 WebDriverWait(chrome, MORE_BTN_CLICK_TIME)
             except (NoSuchElementException, StaleElementReferenceException):
@@ -151,10 +153,10 @@ def main(args):
         episodeListSection = chrome.find_element(By.ID, EPISODE_LIST_CLASSNAME)
         episodes_rows = episodeListSection.find_elements(By.CLASS_NAME, EPISODE_LIST_ROW)
 
-        links = [episode.get_attribute('href') for episode in episodes_rows]
+        links = [episode.get_attribute("href") for episode in episodes_rows]
         folder_title = chrome.title.replace("/", "_").replace("\\", "_").replace(" ", "_")
-        title_parts = re.findall(r'[\w]', folder_title)
-        folder_title = ''.join(title_parts) + "/"
+        title_parts = re.findall(r"[\w]", folder_title)
+        folder_title = "".join(title_parts) + "/"
         print(f"Found {len(links)} episodes")
         os.makedirs(folder_title, exist_ok=True) if args.download else None
         for url in links:
@@ -164,6 +166,7 @@ def main(args):
         get_mpd(chrome, url)
 
     chrome.quit()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

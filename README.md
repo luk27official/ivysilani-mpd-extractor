@@ -14,7 +14,7 @@ Install Python and install Selenium Python package, either by `pip install selen
 
 Run `python extract.py`.
 
-There are two optional arguments:
+There are three optional arguments:
 - `-u, --url <URL>` - runs the program directly on a given URL, otherwise the program asks for the URL
 - `-d, --download` - if present, downloads the video with [yt-dlp](https://github.com/yt-dlp/yt-dlp), assuming `yt-dlp` is in `PATH` (or any other env vars)
 - `-n, --no-headless` - runs the program without the `--headless` option in Chrome, this means the program will create a Chrome testing tab, which is otherwise hidden, sometimes needed for videos

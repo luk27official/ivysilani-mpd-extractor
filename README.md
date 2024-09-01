@@ -28,3 +28,4 @@ If the MPD list is empty, try changing the waiting times and/or the CDN link (th
 If there are any issues with elements, try changing the XPath or CSS selectors.
 
 If you are not a developer or the problem is not listed here, please let me know what the problem is and [open an issue](https://github.com/luk27official/ivysilani-mpd-extractor/issues/new/choose).
+

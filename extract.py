@@ -22,7 +22,6 @@ AD_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
 AD_18_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
 
 # selectors for list of episodes
-EPISODES_LIST_REGEX = r"https://www\.ceskatelevize\.cz/[^/]*/[^/]*/[^/]+[/]?$"
 MORE_BTN_CLASSNAME, MORE_BTN_LOAD_TIME, MORE_BTN_CLICK_TIME = "[class^='moreButton-']", 10, 5
 EPISODE_LIST_CLASSNAME = "episodeListSection"
 EPISODE_LIST_ROW = "ctco_1gy3thf4"
@@ -135,10 +134,8 @@ def main(args):
     chrome = webdriver.Chrome(options=options)
 
     chrome.get(url)
-    # check if the URL is a link to an episode list or only one episode
-    # also, check if there is a button that suggests that there are more episodes
-    # in any case, we treat either as a list of episodes for series
-    if re.match(EPISODES_LIST_REGEX, url) or chrome.find_elements(By.XPATH, SERIES_RUN_XPATH):
+    # check if there is a button that suggests that there are more episodes
+    if chrome.find_elements(By.XPATH, SERIES_RUN_XPATH):
         print(f"Get info about the episode list {url}")
 
         accept_cookies(chrome)

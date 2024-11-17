@@ -16,12 +16,13 @@ import re
 # css selectors
 COOKIE_ACCEPT_BUTTON_ID = "onetrust-accept-btn-handler"
 VIDEO_CLASS_NAME = "playerPageWrapper"
-MOVIE_RUN_XPATH = '//button[contains(@aria-label, "Přehrát")]'
+RUN_BUTTON_XPATH = '//*[starts-with(normalize-space(text()), "Přehrát")]'
+SERIES_RUN_XPATH = '//*[starts-with(normalize-space(text()), "Přehrát") and contains(normalize-space(text()), "díl")]'
 AD_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
 AD_18_SKIP_BUTTON_XPATH = '//span[text()="Přeskočit"]'
 
 # selectors for list of episodes
-EPISODES_LIST_REGEX = r"https://www.ceskatelevize.cz/[^/]*/[^/]*/$"
+EPISODES_LIST_REGEX = r"https://www\.ceskatelevize\.cz/[^/]*/[^/]*/[^/]+[/]?$"
 MORE_BTN_CLASSNAME, MORE_BTN_LOAD_TIME, MORE_BTN_CLICK_TIME = "[class^='moreButton-']", 10, 5
 EPISODE_LIST_CLASSNAME = "episodeListSection"
 EPISODE_LIST_ROW = "ctco_1gy3thf4"
@@ -54,9 +55,10 @@ def get_mpd(chrome, url, folder=""):
 
     try:
         chrome.find_element(By.CLASS_NAME, VIDEO_CLASS_NAME).click()
+        # TODO: not sure if this is valid for distinguishing series from movies... the logic should work nevertheless
         print("Clicked on the video - detected series")
     except:
-        chrome.find_element(By.XPATH, MOVIE_RUN_XPATH).click()
+        chrome.find_element(By.XPATH, RUN_BUTTON_XPATH).click()
         print("Clicked on the video - detected movie")
 
     chrome.switch_to.frame(chrome.find_element(By.TAG_NAME, "iframe"))
@@ -132,9 +134,11 @@ def main(args):
 
     chrome = webdriver.Chrome(options=options)
 
+    chrome.get(url)
     # check if the URL is a link to an episode list or only one episode
-    if re.match(EPISODES_LIST_REGEX, url):
-        chrome.get(url)
+    # also, check if there is a button that suggests that there are more episodes
+    # in any case, we treat either as a list of episodes for series
+    if re.match(EPISODES_LIST_REGEX, url) or chrome.find_elements(By.XPATH, SERIES_RUN_XPATH):
         print(f"Get info about the episode list {url}")
 
         accept_cookies(chrome)

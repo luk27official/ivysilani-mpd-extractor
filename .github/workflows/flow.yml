@@ -19,3 +19,5 @@ jobs:
                   python-version: "3.10"
             - run: pip install -r requirements.txt
             - run: python extract.py --url https://www.ceskatelevize.cz/porady/10995220806-most/216512120010001/
+            - run: python extract.py --url https://www.ceskatelevize.cz/porady/15349949706-lovec
+            - run: python extract.py --url https://www.ceskatelevize.cz/porady/15826323062-jednoho-roku-jedne-noci/

@@ -57,8 +57,15 @@ def get_mpd(chrome, url, folder=""):
         # TODO: not sure if this is valid for distinguishing series from movies... the logic should work nevertheless
         print("Clicked on the video - detected series")
     except:
-        chrome.find_element(By.XPATH, RUN_BUTTON_XPATH).click()
-        print("Clicked on the video - detected movie")
+        try:
+            chrome.find_element(By.XPATH, RUN_BUTTON_XPATH).click()
+            print("Clicked on the video - detected movie")
+        except:
+            print(
+                "No video found, possibly not available in your country or due to other restrictions. Skipping",
+                file=sys.stderr,
+            )
+            return
 
     chrome.switch_to.frame(chrome.find_element(By.TAG_NAME, "iframe"))
 
@@ -100,7 +107,7 @@ def get_mpd(chrome, url, folder=""):
     if len(mpd_list) > 0:
         print("Most recent MPD: ", mpd_list[-1])
     else:
-        print("No MPD found. Try running the script with the --no-headless flag.")
+        print("No MPD found. Try running the script with the --no-headless flag.", file=sys.stderr)
         sys.exit(1)
 
     title = chrome.title.replace("/", "_").replace("\\", "_")

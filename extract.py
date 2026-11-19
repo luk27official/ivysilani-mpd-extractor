@@ -12,6 +12,10 @@ STREAM_API = "https://api.ceskatelevize.cz/video/v1/playlist-vod/v1/stream-data/
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36"
 
 
+class RegionalAvailabilityError(RuntimeError):
+    """The content exists but is unavailable from the caller's region."""
+
+
 def get_idec(url: str) -> tuple[str, str]:
     match = re.search(r"/porady/[^/]+/([0-9]+)/?", url)
     idec = match.group(1) if match else None
@@ -61,6 +65,14 @@ def get_stream(idec: str) -> str:
         message = data.get("message", {})
         labels = message.get("labels", {}) if isinstance(message, dict) else {}
         detail = labels.get("textShort") or labels.get("generalError") or "Video is unavailable"
+        regional_markers = (
+            "práva pro vaše území",
+            "MISSING_TERRITORY",
+            "TERRITORY",
+            "GEOBLOCK",
+        )
+        if any(marker.lower() in (detail + str(message)).lower() for marker in regional_markers):
+            raise RegionalAvailabilityError(detail)
         raise RuntimeError(detail)
 
     streams = data.get("streams") or []
@@ -88,6 +100,9 @@ def main(args: argparse.Namespace) -> int:
 
     try:
         extract(url, download=args.download)
+    except RegionalAvailabilityError as error:
+        print(str(error), file=sys.stderr)
+        return 2
     except (requests.RequestException, RuntimeError, KeyError) as error:
         print(str(error), file=sys.stderr)
         return 1

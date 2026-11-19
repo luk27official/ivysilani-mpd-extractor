@@ -19,5 +19,26 @@ jobs:
               with:
                   python-version: "3.12"
             - run: pip install -r requirements.txt
-            - run: python extract.py --url https://www.ceskatelevize.cz/porady/898602-chobotnice-z-ii-patra/287350951300001
-            - run: python extract.py --url https://www.ceskatelevize.cz/porady/15826323062-jednoho-roku-jedne-noci/
+            - name: Test MPD extraction
+              shell: bash
+              run: |
+                  urls=(
+                      "https://www.ceskatelevize.cz/porady/15003337252-bubak/"
+                      "https://www.ceskatelevize.cz/porady/16866898966-pan-nikdo-proti-putinovi/"
+                      "https://www.ceskatelevize.cz/porady/10076880312-bohac-a-chudak/"
+                      "https://www.ceskatelevize.cz/porady/1119695675-zrcadlo-doby/"
+                      "https://www.ceskatelevize.cz/porady/11599761360-v-pasti/217381481400001/"
+                  )
+
+                  for url in "${urls[@]}"; do
+                      set +e
+                      python extract.py --url "$url"
+                      status=$?
+                      set -e
+
+                      if [ "$status" -eq 2 ]; then
+                          echo "Regional availability restriction detected for $url; not a script failure."
+                      elif [ "$status" -ne 0 ]; then
+                          exit "$status"
+                      fi
+                  done

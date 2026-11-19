@@ -23,10 +23,13 @@ Optional arguments:
 - `-u, --url <URL>` — extract from a specific iVysílání URL
 - `-d, --download` — download with `yt-dlp` if it is available in `PATH`
 
-Example:
+Examples:
 
 ```powershell
 python extract.py -u "https://www.ceskatelevize.cz/porady/16866898966-pan-nikdo-proti-putinovi/"
+python extract.py -u "https://www.ceskatelevize.cz/porady/10076880312-bohac-a-chudak/"
+python extract.py -u "https://www.ceskatelevize.cz/porady/1119695675-zrcadlo-doby/"
+python extract.py -u "https://www.ceskatelevize.cz/porady/11599761360-v-pasti/217381481400001/"
 ```
 
 The printed MPD URL can be used directly with tools such as `yt-dlp` or VLC.
@@ -35,7 +38,7 @@ Restricted, DRM-only, unavailable, or missing-rights videos are reported by the 
 
 ## Troubleshooting
 
-If `yt-dlp` is not found, install it and ensure it is available through `PATH`.
+If `yt-dlp` is not found, install it and ensure it is available through `PATH`. This script does not manage FFmpeg.
 
 If extraction fails, verify that the URL is public and still available, and open an issue with the URL and error message.
 

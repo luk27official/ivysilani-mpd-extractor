@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import os
 import re
-import shutil
 import subprocess
 import sys
 
@@ -23,7 +22,7 @@ def get_idec(url: str) -> tuple[str, str]:
 
     match = re.search(r"IDEC=([0-9]+)", response.text)
     if not match:
-        match = re.search(r"/porady/[^\" ]*/([0-9]+)/?", response.url)
+        match = re.search(r"/porady/[\" ]*/([0-9]+)/?", response.url)
     if not match:
         raise RuntimeError("Could not find the video IDEC in the page")
 
@@ -60,13 +59,6 @@ def get_stream(idec: str) -> str:
     return streams[0]["url"]
 
 
-def find_executable(name: str) -> str | None:
-    local = os.path.join(os.path.dirname(os.path.abspath(__file__)), name + (".exe" if os.name == "nt" else ""))
-    if os.path.isfile(local):
-        return local
-    return shutil.which(name)
-
-
 def extract(url: str, download: bool = False, folder: str = "") -> None:
     idec, title = get_idec(url)
     print("Loaded URL:", url)
@@ -76,16 +68,7 @@ def extract(url: str, download: bool = False, folder: str = "") -> None:
     print("MPD:", mpd_url)
 
     if download:
-        yt_dlp = find_executable("yt-dlp")
-        if not yt_dlp:
-            raise RuntimeError("yt-dlp was not found on PATH or next to extract.py")
-
-        command = [yt_dlp, "--no-overwrites", "-o", os.path.join(folder, title) + ".%(ext)s"]
-        ffmpeg = find_executable("ffmpeg")
-        if ffmpeg:
-            command.extend(["--ffmpeg-location", ffmpeg])
-        command.append(mpd_url)
-        subprocess.call(command)
+        subprocess.call(["yt-dlp", "--no-overwrites", "-o", os.path.join(folder, title) + ".%(ext)s", mpd_url])
 
 
 def main(args: argparse.Namespace) -> int:

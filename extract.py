@@ -61,18 +61,33 @@ def get_stream(idec: str) -> str:
     )
 
     data = response.json()
+    message = data.get("message", {})
+    labels = message.get("labels", {}) if isinstance(message, dict) else {}
+    detail = labels.get("textShort") or labels.get("generalError") or "Video is unavailable"
+
+    playability = data.get("playability", {})
+    status = playability.get("status", {}) if isinstance(playability, dict) else {}
+    status_name = status.get("name") if isinstance(status, dict) else None
+    response_status = message.get("status", {}) if isinstance(message, dict) else {}
+    response_status_name = response_status.get("name") if isinstance(response_status, dict) else None
+
+    regional_markers = (
+        "práva pro vaše území",
+        "MISSING_TERRITORY",
+        "TERRITORY",
+        "GEOBLOCK",
+        "GEO",
+        "REGION",
+        "COUNTRY",
+    )
+    regional_text = " ".join(
+        str(value)
+        for value in (detail, status_name, response_status_name, message, playability)
+    )
+    if any(marker.lower() in regional_text.lower() for marker in regional_markers):
+        raise RegionalAvailabilityError(detail)
+
     if response.status_code >= 400:
-        message = data.get("message", {})
-        labels = message.get("labels", {}) if isinstance(message, dict) else {}
-        detail = labels.get("textShort") or labels.get("generalError") or "Video is unavailable"
-        regional_markers = (
-            "práva pro vaše území",
-            "MISSING_TERRITORY",
-            "TERRITORY",
-            "GEOBLOCK",
-        )
-        if any(marker.lower() in (detail + str(message)).lower() for marker in regional_markers):
-            raise RegionalAvailabilityError(detail)
         raise RuntimeError(detail)
 
     streams = data.get("streams") or []

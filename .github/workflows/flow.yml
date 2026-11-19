@@ -23,11 +23,9 @@ jobs:
               shell: bash
               run: |
                   urls=(
-                      "https://www.ceskatelevize.cz/porady/15003337252-bubak/"
-                      "https://www.ceskatelevize.cz/porady/16866898966-pan-nikdo-proti-putinovi/"
-                      "https://www.ceskatelevize.cz/porady/10076880312-bohac-a-chudak/"
-                      "https://www.ceskatelevize.cz/porady/1119695675-zrcadlo-doby/"
+                      "https://www.ceskatelevize.cz/porady/898602-chobotnice-z-ii-patra/287350951300001"
                       "https://www.ceskatelevize.cz/porady/11599761360-v-pasti/217381481400001/"
+                      "https://www.ceskatelevize.cz/porady/1119695675-zrcadlo-doby/203562276570001/"
                   )
 
                   for url in "${urls[@]}"; do

@@ -19,5 +19,5 @@ jobs:
               with:
                   python-version: "3.12"
             - run: pip install -r requirements.txt
-            - run: python extract.py --url https://www.ceskatelevize.cz/porady/898602-chobotnice-z-ii-patra/287350951300001
-            - run: python extract.py --url https://www.ceskatelevize.cz/porady/15826323062-jednoho-roku-jedne-noci/
+            - run: python extract.py --url https://www.ceskatelevize.cz/porady/15003337252-bubak/
+            - run: python extract.py --url https://www.ceskatelevize.cz/porady/16866898966-pan-nikdo-proti-putinovi/
